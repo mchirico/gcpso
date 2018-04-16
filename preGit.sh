@@ -11,8 +11,8 @@
 gofmt -s -w examples/example.go
 gofmt -s -w example/example_test.go
 go test -race -v -coverprofile=c0.out -covermode=atomic github.com/mchirico/gcpso/examples
-go test -race -v -coverprofile=c1.out -covermode=atomic github.com/mchirico/gcpso/utils
-go vet -v github.com/mchirico/gcpso/examples github.com/mchirico/gcpso/utils
+#go test -race -v -coverprofile=c1.out -covermode=atomic github.com/mchirico/gcpso/utils
+go vet -v github.com/mchirico/gcpso/examples # github.com/mchirico/gcpso/utils
 
 
 # Mock just area
