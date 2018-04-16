@@ -9,7 +9,6 @@ install:
 - go get github.com/stretchr/testify/assert
 
 
-
 script:
 - go test -race -v -coverprofile=c0.out -covermode=atomic github.com/mchirico/gcpso/examples
 
