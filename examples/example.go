@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
-	"time"
 	"sync"
+	"time"
 )
 
 type Command interface {
 	Execute() []byte
 	ID() []rune
-	Done(Reporter)
+	Done(stats ReporterStats)
 }
 
 type Report interface {
@@ -31,7 +31,15 @@ type Reporter struct {
 	start  time.Time
 	stop   time.Time
 	delta  time.Duration
-	mu    sync.Mutex
+	mu     sync.Mutex
+}
+
+type ReporterStats struct {
+	id     []rune
+	result []byte
+	start  time.Time
+	stop   time.Time
+	delta  time.Duration
 }
 
 func (r *Reporter) Result() []byte {
@@ -65,15 +73,14 @@ func (r *Reporter) getID() []rune {
 	return r.id
 }
 
-func (r Reporter) Summary() string {
+func (r *Reporter) Summary() string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	msgFmt := "start: %s, stop: %s, delta: %s"
-	msg := fmt.Sprintf(msgFmt,r.start,r.stop,r.delta)
+	msg := fmt.Sprintf("start: %s, stop: %s, delta: %s",
+		r.start, r.stop, r.delta)
 	return msg
 }
-
 
 type PingCommand struct {
 	result []byte
@@ -89,9 +96,9 @@ func (p *PingCommand) Execute() []byte {
 func (p *PingCommand) ID() []rune {
 	return []rune("end")
 }
-func (p *PingCommand) Done(r Reporter) {
+func (p *PingCommand) Done(r ReporterStats) {
 
-	for i:=0; i < 5; i++ {
+	for i := 0; i < 5; i++ {
 		fmt.Printf("report id: %v\n", string(r.id))
 		time.Sleep(time.Duration(1) *
 			1000 * time.Millisecond)
@@ -100,7 +107,6 @@ func (p *PingCommand) Done(r Reporter) {
 
 	p.id <- []rune("All done")
 }
-
 
 type PingCommandSlow struct {
 	result []byte
@@ -116,9 +122,9 @@ func (p *PingCommandSlow) Execute() []byte {
 func (p *PingCommandSlow) ID() []rune {
 	return []rune("end Slow")
 }
-func (p *PingCommandSlow) Done(r Reporter) {
+func (p *PingCommandSlow) Done(r ReporterStats) {
 
-	for i:=0; i < 3; i++ {
+	for i := 0; i < 3; i++ {
 		fmt.Printf("Ping Slow report id: %v\n", string(r.id))
 		time.Sleep(time.Duration(3) *
 			1000 * time.Millisecond)
@@ -127,14 +133,6 @@ func (p *PingCommandSlow) Done(r Reporter) {
 
 	p.id <- []rune("All done")
 }
-
-
-
-
-
-
-
-
 
 func Worker() {
 	var report = &Reporter{}
@@ -146,8 +144,12 @@ func Worker() {
 			report.id = cmd.ID()
 			report.Stop()
 
+			rs := &ReporterStats{}
+			rs.delta = report.delta
+			rs.stop = report.stop
+			rs.id = report.id
 			// Do not want to block
-			go cmd.Done(*report)
+			go cmd.Done(*rs)
 
 		case reports <- report:
 
@@ -174,7 +176,6 @@ func PingSlow() {
 	<-p.id
 }
 
-
 func PingReport() {
 	r := <-reports
 	fmt.Printf("\n\nreports: %v id: %v\n",
@@ -187,7 +188,7 @@ func main() {
 	go PingSlow()
 	go Ping()
 
-	for i:=0; i < 10; i++ {
+	for i := 0; i < 10; i++ {
 		PingReport()
 		time.Sleep(time.Duration(1) *
 			1000 * time.Millisecond)
