@@ -70,6 +70,8 @@ func (r *Reporter) ID(id []rune) []rune {
 }
 
 func (r *Reporter) getID() []rune {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	return r.id
 }
 
@@ -139,6 +141,7 @@ func Worker() {
 	for {
 		select {
 		case cmd := <-command:
+
 			report.Start()
 			report.result = cmd.Execute()
 			report.id = cmd.ID()
@@ -148,6 +151,7 @@ func Worker() {
 			rs.delta = report.delta
 			rs.stop = report.stop
 			rs.id = report.id
+
 			// Do not want to block
 			go cmd.Done(*rs)
 
@@ -188,7 +192,7 @@ func main() {
 	go PingSlow()
 	go Ping()
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 15; i++ {
 		PingReport()
 		time.Sleep(time.Duration(1) *
 			1000 * time.Millisecond)
