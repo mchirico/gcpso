@@ -43,6 +43,8 @@ type ReporterStats struct {
 }
 
 func (r *Reporter) Result() []byte {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	return r.result
 }
 func (r *Reporter) Start() time.Time {
@@ -90,9 +92,7 @@ type PingCommand struct {
 }
 
 func (p *PingCommand) Execute() []byte {
-
 	p.result = []byte("react pings")
-
 	return []byte("react pings")
 }
 func (p *PingCommand) ID() []rune {
