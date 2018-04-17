@@ -10,7 +10,7 @@ install:
 
 
 script:
-- go test -race -v -coverprofile=c0.out -covermode=atomic github.com/mchirico/gcpso/examples
+- go test -race -v -coverprofile=c0.out -cpuprofile cpu.prof -memprofile mem.prof -covermode=atomic github.com/mchirico/gcpso/examples
 
 # No tests at this moment
 # - go test -race -v -coverprofile=c1.out -covermode=atomic github.com/mchirico/gcpso/utils
